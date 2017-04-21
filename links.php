@@ -6,16 +6,6 @@
   * Version: v1.0
 */
 
-/* TODO 
-zatím prochází pouze jednu podúrověň
-	linky na stránce s linkem
-
-zprovoznit výpis parentpage pro každý link
-
-optimalizovat hledaní tagů s linkem 
-	zkrátit funkci getTags
-*/
-
 ini_set('default_socket_timeout', 15);
 include_once('simple_html_dom.php');
 
