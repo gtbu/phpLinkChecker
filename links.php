@@ -78,7 +78,10 @@ class Links {
 								$links
 							);
 				}					
+
 				$links = array_unique($links);
+
+				//print_r($links);
 			}	
 			/* 
 			* Link does not contain host name => external link
@@ -256,6 +259,8 @@ class Links {
 		}
 
 		array_merge($links, $newLinks);
+
+		//print_r($newLinks);
 
 	    return $newLinks;
 	}
