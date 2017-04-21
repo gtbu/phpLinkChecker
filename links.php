@@ -1,23 +1,28 @@
 <?php
 /*
-  * PHP class for checking broken links on given website url
+  * PHP class for checking broken links of given website url
   * Author: Jan Fitz
   * Date: 2017-04-20
   * Version: v1.0
 */
 
 ini_set('default_socket_timeout', 15);
-include_once('simple_html_dom.php');
 
 class Links {
-  /*
-  * Process terminal arguments
-  */
-   public function processArgs($argv) {
-    	switch($argv[1]) {
 
-       		case "-project" :
-         		$badLinks = $this->getLinks($argv[2]);
+	/**
+	* Process terminal arguments
+	*
+	* @param array $argv		terminal arguments
+	*
+	* @return int 				exit status	
+	*	
+	*/
+	public function processArgs($argv) {
+	  	switch($argv[1]) {
+
+	   		case "-project" :
+	       		$badLinks = $this->getLinks($argv[2]);
 
          		if(!empty($badLinks)) {
          			echo sizeof($badLinks) . " links broken\n";
@@ -29,22 +34,32 @@ class Links {
          	break;
 
         	default:
-          	echo "Something went wrong with args processing\n";
+	          	echo "Something went wrong with args processing\n";
     	}
+
+    	return;
    	}
 
-	/*
+	/**
 	* Get all links on current page
+	*
+	* @param string $project		project name (url format)
+	* @param array $links 			default empty array of found links
+	* @param array $nadLinks		default empty array of badLinks
+	*
+	* @return array $badLinks		
+	* 
 	*/
 	public function getLinks($project, $links = array(), $badLinks = array()) {
 
-		$content = file_get_html($project);		
+		$links = $this->normalizeLinks(
+					$this->getTags(
+						file_get_contents($project),
+						$links
+					), 
+					$project
+				);
 
-		$links = $this->getTags($content, $links);
-		
-		$links = $this->normalizeLinks($links, $project);
-
-		// Get root of current project
 		$parsedUrl = parse_url($project);
 		$root = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
 
@@ -55,10 +70,13 @@ class Links {
 			*/	
 			if (strpos($link, $root) !== false) {
 				error_reporting(0);
-				$content = file_get_html($link);
+					$content = file_get_contents($link);
 				error_reporting(-1);
 				if($content) {
-					$links = $this->getTags($content, $links);
+					$links = $this->getTags(
+								$content, 
+								$links
+							);
 				}					
 				$links = array_unique($links);
 			}	
@@ -77,123 +95,36 @@ class Links {
 			}					
 		}	
 
-		$links = array_unique($this->normalizeLinks($links, $project));
+		//$links = array_unique($this->normalizeLinks($links, $project));	
+		//echo sizeof($links) . " links found \n";	
 
-		echo sizeof($links) . " links found \n";	
-
-		$badLinks = $this->checkLinks($links, $badLinks, $project);	
+		$badLinks = $this->checkLinks(
+						array_unique(
+							$this->normalizeLinks(
+								$links, 
+								$project 
+							)
+						), 
+						$badLinks, 
+						$project
+					);	
 
 	    return array_unique($badLinks, SORT_REGULAR);
 	}
 
-	/*
-	*  Find all tags containing links
-	*/
-	public function getTags($content, $links) {
-
-		// Find all 'a' tags (href atributte)
-		foreach($content->find('a') as $element) {
-			if($element->href) {	    	
-				array_push($links, $element->href); 
-			}
-		}
-
-		// Find all 'a' tags (href atributte)
-		foreach($content->find('area') as $element) {
-			if($element->href) {	    	
-				array_push($links, $element->href); 
-			}
-		}
-
-		// Find all 'a' tags (href atributte)
-		foreach($content->find('base') as $element) {
-			if($element->href) {	    	
-				array_push($links, $element->href); 
-			}
-		}
-
-		// Find all 'a' tags (href atributte)
-		foreach($content->find('link') as $element) {
-			if($element->href) {	    	
-				array_push($links, $element->href); 
-			}
-		}
-		
-		// Find all 'img' tags (href atributte)
-		foreach($content->find('img') as $element) {
-		    if($element->scr) {
-		    	array_push($links, $element->src); 
-		    }
-		}
-
-		// Find all 'img' tags (href atributte)
-		foreach($content->find('audio') as $element) {
-		    if($element->scr) {
-		    	array_push($links, $element->src); 
-		    }
-		}
-
-		// Find all 'img' tags (href atributte)
-		foreach($content->find('embed') as $element) {
-		    if($element->scr) {
-		    	array_push($links, $element->src); 
-		    }
-		}
-
-		// Find all 'img' tags (href atributte)
-		foreach($content->find('iframe') as $element) {
-		    if($element->scr) {
-		    	array_push($links, $element->src); 
-		    }
-		}
-
-		// Find all 'img' tags (href atributte)
-		foreach($content->find('script') as $element) {
-		    if($element->scr) {
-		    	array_push($links, $element->src); 
-		    }
-		}
-
-		// Find all 'img' tags (href atributte)
-		foreach($content->find('input') as $element) {
-		    if($element->scr) {
-		    	array_push($links, $element->src); 
-		    }
-		}
-
-		// Find all 'img' tags (href atributte)
-		foreach($content->find('source') as $element) {
-		    if($element->scr) {
-		    	array_push($links, $element->src); 
-		    }
-		}		
-
-		// Find all 'img' tags (href atributte)
-		foreach($content->find('track') as $element) {
-		    if($element->scr) {
-		    	array_push($links, $element->src); 
-		    }
-		}
-
-		// Find all 'img' tags (href atributte)
-		foreach($content->find('video') as $element) {
-		    if($element->scr) {
-		    	array_push($links, $element->src); 
-		    }
-		}
-
-	    return $links;
-	}
-
-	/*
+	/**
 	* Normalize intern links to executable format
+	*
+	* @param array $links 			default empty array of found links
+	* @param string $project		project name (url format)
+	*
+	* @return array $link 			normalized links		
+	*
 	*/
 	public function normalizeLinks($links, $project) {
 
-		// Recursively find all links on all pages
 		foreach($links as &$link) {
 
-			// Get root of current project
 		    $parsedUrl = parse_url($project);
 			$root = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
 
@@ -201,7 +132,6 @@ class Links {
 				$link =  "/";
 			}
 		    if (strncmp($link, '/', 1) === 0) {
-				// Concatenate new path
 		    	$link =  $root . $link;
 		    }
 		    
@@ -223,15 +153,22 @@ class Links {
 	    return $links;
 	}
 
-	/*
+	/**
 	* Check http response of all recognized links
+	*
+	* @param array $links 			array of found links
+	* @param array $badLinks 		array of found broken links
+	* @param string $page 			current page
+	*
+	* @return array $badLinks 		found broken links	
+	*
 	*/
 	public function checkLinks($links, $badLinks, $page) {
 
 		foreach($links as $link) {
 
 			error_reporting(0);
-			$headers = get_headers($link, 1);
+				$headers = get_headers($link, 1);
 			error_reporting(-1);
 
 			if ($headers) {				
@@ -262,9 +199,68 @@ class Links {
 		}	 
 		return $badLinks;
 	}
+
+	/**
+	*  Find all tags containing links
+	*
+	* @param string $content		html content of current page
+	* @param array $links			default empty array of links
+	*
+	* @return array $links 	 		found links	
+	*
+	*/
+	public function getTags($content, $links) {
+
+		static $newLinks = array();
+
+		/*
+		* Get content of all href attributes
+		*/
+		preg_match_all('/href=".*"/U', $content, $links);
+		foreach ($links as $linkArray) {
+			foreach ($linkArray as $link) {
+				$link = strrev(
+							substr(
+								strrev(
+									substr(
+										$link, 
+										6
+									)
+								), 
+								1
+							)
+						);
+				array_push($newLinks, $link); 
+			}
+		}
+
+		/*
+		* Get content of all src attributes
+		*/
+		preg_match_all('/src=".*"/U', $content, $links);
+		foreach ($links as $linkArray) {
+			foreach ($linkArray as $link) {
+				$link = strrev(
+							substr(
+								strrev(
+									substr(
+										$link, 
+										5
+									)
+								), 
+								1
+							)
+						);
+				array_push($newLinks, $link); 
+			}
+		}
+
+		array_merge($links, $newLinks);
+
+	    return $newLinks;
+	}
 }
 
-$obj = new Links; // New instance of json object
-
-$obj->processArgs($argv); // Process terminal arguments
+$obj = new Links;
+$obj->processArgs($argv);
 ?>
