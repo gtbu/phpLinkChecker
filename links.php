@@ -6,6 +6,16 @@
   * Version: v1.0
 */
 
+/* TODO 
+zatím prochází pouze jednu podúrověň
+	linky na stránce s linkem
+
+zprovoznit výpis parentpage pro každý link
+
+optimalizovat hledaní tagů s linkem 
+	zkrátit funkci getTags
+*/
+
 ini_set('default_socket_timeout', 15);
 include_once('simple_html_dom.php');
 
@@ -20,6 +30,7 @@ class Links {
          		$badLinks = $this->getLinks($argv[2]);
 
          		if(!empty($badLinks)) {
+         			echo sizeof($badLinks) . " links broken\n";
          			print_r($badLinks);
          		}
          		else {
@@ -74,12 +85,13 @@ class Links {
 					$this->checkLinks($oneLink, $badLinks, $link)
 				);
 			}					
-		}
+		}	
+
 		$links = array_unique($this->normalizeLinks($links, $project));
 
 		echo sizeof($links) . " links found \n";	
 
-		$badLinks = $this->checkLinks($links, $badLinks, $project);
+		$badLinks = $this->checkLinks($links, $badLinks, $project);	
 
 	    return array_unique($badLinks, SORT_REGULAR);
 	}
@@ -235,7 +247,7 @@ class Links {
 			if ($headers) {				
 		    	$statusCode = substr($headers[0], 9, 3 );
 		    	/*
-		    	* Accept only request 2xx and 3xx codes
+		    	* Accept only 2xx and 3xx response codes
 		    	*/
 			    if(substr($statusCode, 0, 1) !== "2") {
 			    	if(substr($statusCode, 0, 1) !== "3") {
