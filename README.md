@@ -1,3 +1,3 @@
 # php-link-checker
 
-php links.php -project http://test.website.com
+php links.php -project http://foo.foo
